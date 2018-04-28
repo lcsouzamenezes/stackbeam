@@ -3,10 +3,7 @@
  */
 let clients = {};
 
-const fs = require('fs');
-const errorJSON = JSON.parse(fs.readFileSync('./dataSample.json', 'utf8'));
-
-module.exports.init = socket => {
+module.exports.init = (socket, errorListener) => {
 
   socket.on('connection', client => {
 
@@ -15,9 +12,9 @@ module.exports.init = socket => {
       socket.sockets.emit('update', `${name} has connected to the server.`);
       console.log(`${clients[client.id]} has joined the server.`);
 
-      setTimeout(() => {
-        socket.sockets.emit('code', errorJSON);
-      }, 1000);
+      errorListener.on('serverError', (errorJSON) => {
+        socket.sockets.emit('error', errorJSON);
+      });
     });
 
     client.on('disconnect', reason => {

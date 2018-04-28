@@ -9,26 +9,33 @@ const PORT = process.env.SERVER_PORT;
  * Load necessary modules
  */
 const host = `Server running on PORT : ${PORT}`;
+const ZeroCrash = require('./libs/zerocrash');
 const express = require('express');
-const Raven = require('raven');
 const app = express();
 
-// The request handler must be the first middleware on the app
-app.use(Raven.requestHandler());
+/**
+ * Initialize Listeners
+ */
+const EventEmitter = require('events');
+const eventListener = new EventEmitter();
 
-app.get('/', function mainHandler(req, res, next) {
-  return next({ 'message': 'error' });
+app.get('/', (req, res, next) => {
+  try {
+    throw new Error('Broke!');
+  } catch (error) {
+    next(error);
+  }
 });
-
-// The error handler must be before any other error middleware
-app.use(Raven.errorHandler());
 
 // Optional fallthrough error handler
 app.use(function onError(err, req, res, next) {
-  // The error id is attached to `res.sentry` to be returned
-  // and optionally displayed to the user for support.
+
+  ZeroCrash.parseStack(err, frames => {
+    eventListener.emit('serverError', frames);
+  });
+
   res.statusCode = 500;
-  res.end(res.sentry + '\n');
+  res.end('Oops, something bad happened');
 });
 
 /**
@@ -41,5 +48,5 @@ let server = app.listen(PORT, () => {
    * Initializes the socket server
    */
   const io = require('socket.io').listen(server);
-  const socket = require('./socketServer').init(io);
+  const socket = require('./socketServer').init(io, eventListener);
 });
