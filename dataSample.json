@@ -1,0 +1,75 @@
+{
+  "id": "821c9431c1cc47499ef151abfff7d64d",
+  "project": 1194628,
+  "release": null,
+  "dist": null,
+  "platform": "node",
+  "culprit": "app in mainHandler",
+  "message": "Error: Broke!",
+  "datetime": "2018-04-23T19:30:48.000000Z",
+  "time_spent": null,
+  "errors": [],
+  "extra": {
+    "node": "v9.8.0"
+  },
+  "fingerprint": [
+    "{{ default }}"
+  ],
+  "key_id": 565183,
+  "metadata": {
+    "type": "Error",
+    "value": "Broke!"
+  },
+  "received": 1524511850,
+  "sdk": {
+    "version": "2.5.0",
+    "name": "raven-node"
+  },
+  "sentry.interfaces.Breadcrumbs": {},
+  "sentry.interfaces.Exception": {
+    "exc_omitted": null,
+    "values": [{
+      "stacktrace": {
+        "frames": [{
+            "function": "mainHandler",
+            "abs_path": "C:\\Users\\ZeroCrash\\Desktop\\test\\app.js",
+            "pre_context": [
+              "// Must configure ZeroCrash before doing anything else with it ",
+              "ZeroCrash.config('https://server.zerocrash.net').install(); ",
+              " ",
+              "// The request handler must be the first middleware on the app ",
+              "app.use(ZeroCrash.requestHandler()); ",
+              " ",
+              "app.get('/', function mainHandler(req, res) { "
+            ],
+            "post_context": [
+              "}); ",
+              " ",
+              "// The error handler must be before any other error middleware ",
+              "app.use(ZeroCrash.errorHandler()); ",
+              " ",
+              "// Optional fallthrough error handler ",
+              "app.use(function onError(err, req, res, next) { "
+            ],
+            "filename": "C:\\Users\\ZeroCrash\\Desktop\\test\\app.js",
+            "module": "app",
+            "colno": 11,
+            "in_app": true,
+            "context_line": " throw new Error('Broke!'); ",
+            "lineno": 11
+          }
+        ]
+      },
+      "type": "Error",
+      "value": "Broke!"
+    }]
+  },
+  "sentry.interfaces.Message": {
+    "message": "Error: Broke!"
+  },
+  "sentry.interfaces.User": {
+    "ip_address": "::1"
+  },
+  "type": "error",
+  "version": "5"
+}
