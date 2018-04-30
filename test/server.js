@@ -1,17 +1,27 @@
-// The request handler must be the first middleware on the app
-app.use(Raven.requestHandler());
+require('dotenv').config();
 
-app.get('/', function mainHandler(req, res) {
-  throw new Error('Broke!');
+/**
+ * Constants
+ */
+const PORT = 1333;
+
+/**
+ * Load necessary modules
+ */
+const host = `Server running on PORT : ${PORT}`;
+const ZeroCrash = require('../libs/zerocrash');
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res, next) => {
+  throw new Error('AN ERROR HAS OCCURED!');
 });
 
-// The error handler must be before any other error middleware
-app.use(Raven.errorHandler());
+app.use(ZeroCrash.errorHandler());
 
-// Optional fallthrough error handler
 app.use(function onError(err, req, res, next) {
-  // The error id is attached to `res.sentry` to be returned
-  // and optionally displayed to the user for support.
   res.statusCode = 500;
-  res.end(res.sentry + '\n');
+  res.end('Oops, something bad happened');
 });
+
+let server = app.listen(PORT, () => { console.log(host); });

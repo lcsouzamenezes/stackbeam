@@ -12,6 +12,7 @@
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
     "socket.io": "^2.1.0",
+    "stack-trace": "0.0.10",
     "vue": "^2.5.16"
   },
   "devDependencies": {

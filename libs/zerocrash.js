@@ -1,18 +1,40 @@
-'use strict';
+const fs = require('fs');
+const url = require('url');
+const path = require('path');
+const https = require('http');
+const stacktrace = require('stack-trace');
+const querystring = require('querystring');
 
-var fs = require('fs');
-var url = require('url');
-// var transports = require('./transports');
-var path = require('path');
-// var lsmod = require('../vendor/node-lsmod');
-var stacktrace = require('stack-trace');
-var stringify = require('./json-stringify-safe');
+const LINES_OF_CONTEXT = 7;
+let port = process.env.SERVER_PORT;
+let hostname = process.env.SERVER_HOSTNAME;
+const zerocrashVersion = require('../package.json').version;
 
-var zerocrashVersion = require('../package.json').version;
-
-var protocolMap = {
+const protocolMap = {
   http: 80,
   https: 443
+};
+
+if (hostname.includes('http://')) {
+  hostname = hostname.split('http://')[1];
+  port = protocolMap.http;
+}
+
+if (hostname.includes('https://')) {
+  hostname = hostname.split('https://')[1];
+  port = protocolMap.https;
+}
+
+if (hostname.includes(':')) {
+  hostname = hostname.split(':')[0];
+  port = hostname.split(':')[1];
+}
+
+let logServerOpts = {
+  hostname: hostname,
+  method: 'POST',
+  port: port,
+  path: '/'
 };
 
 var consoleAlerts = {};
@@ -23,22 +45,47 @@ var MAX_SERIALIZE_EXCEPTION_DEPTH = 3;
 var MAX_SERIALIZE_EXCEPTION_SIZE = 50 * 1024;
 var MAX_SERIALIZE_KEYS_LENGTH = 40;
 
-function utf8Length(value) {
+let stringify = (obj, replacer, spaces, cycleReplacer) => {
+  return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces)
+}
+
+let serializer = (replacer, cycleReplacer) => {
+  var stack = [],
+    keys = []
+
+  if (cycleReplacer == null) cycleReplacer = function (key, value) {
+    if (stack[0] === value) return "[Circular ~]"
+    return "[Circular ~." + keys.slice(0, stack.indexOf(value)).join(".") + "]"
+  }
+
+  return function (key, value) {
+    if (stack.length > 0) {
+      var thisPos = stack.indexOf(this);
+      ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
+      ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
+      if (~stack.indexOf(value)) value = cycleReplacer.call(this, key, value);
+    } else stack.push(value)
+
+    return replacer == null ? value : replacer.call(this, key, value)
+  }
+}
+
+let utf8Length = value => {
   return ~-encodeURI(value).split(/%..|./).length;
 }
 
-function jsonSize(value) {
+let jsonSize = value => {
   return utf8Length(JSON.stringify(value));
 }
 
-function isPlainObject(what) {
+let isPlainObject = what => {
   return Object.prototype.toString.call(what) === '[object Object]';
 }
 
 module.exports.isPlainObject = isPlainObject;
 
-function serializeValue(value) {
-  var maxLength = 40;
+let serializeValue = value => {
+  let maxLength = 40;
 
   if (typeof value === 'string') {
     return value.length <= maxLength ? value : value.substr(0, maxLength - 1) + '\u2026';
@@ -50,7 +97,7 @@ function serializeValue(value) {
     return value;
   }
 
-  var type = Object.prototype.toString.call(value);
+  let type = Object.prototype.toString.call(value);
 
   // Node.js REPL notation
   if (type === '[object Object]') return '[Object]';
@@ -61,16 +108,16 @@ function serializeValue(value) {
   return value;
 }
 
-function serializeObject(value, depth) {
+let serializeObject = (value, depth) => {
   if (depth === 0) return serializeValue(value);
 
   if (isPlainObject(value)) {
-    return Object.keys(value).reduce(function(acc, key) {
+    return Object.keys(value).reduce(function (acc, key) {
       acc[key] = serializeObject(value[key], depth - 1);
       return acc;
     }, {});
   } else if (Array.isArray(value)) {
-    return value.map(function(val) {
+    return value.map(function (val) {
       return serializeObject(val, depth - 1);
     });
   }
@@ -78,7 +125,7 @@ function serializeObject(value, depth) {
   return serializeValue(value);
 }
 
-function serializeException(ex, depth, maxSize) {
+let serializeException = (ex, depth, maxSize) => {
   if (!isPlainObject(ex)) return ex;
 
   depth = typeof depth !== 'number' ? MAX_SERIALIZE_EXCEPTION_DEPTH : depth;
@@ -95,11 +142,11 @@ function serializeException(ex, depth, maxSize) {
 
 module.exports.serializeException = serializeException;
 
-function serializeKeysForMessage(keys, maxLength) {
+let serializeKeysForMessage = (keys, maxLength) => {
   if (typeof keys === 'number' || typeof keys === 'string') return keys.toString();
   if (!Array.isArray(keys)) return '';
 
-  keys = keys.filter(function(key) {
+  keys = keys.filter(function (key) {
     return typeof key === 'string';
   });
   if (keys.length === 0) return '[object has no keys]';
@@ -107,8 +154,8 @@ function serializeKeysForMessage(keys, maxLength) {
   maxLength = typeof maxLength !== 'number' ? MAX_SERIALIZE_KEYS_LENGTH : maxLength;
   if (keys[0].length >= maxLength) return keys[0];
 
-  for (var usedKeys = keys.length; usedKeys > 0; usedKeys--) {
-    var serialized = keys.slice(0, usedKeys).join(', ');
+  for (let usedKeys = keys.length; usedKeys > 0; usedKeys--) {
+    let serialized = keys.slice(0, usedKeys).join(', ');
     if (serialized.length > maxLength) continue;
     if (usedKeys === keys.length) return serialized;
     return serialized + '\u2026';
@@ -125,23 +172,23 @@ module.exports.disableConsoleAlerts = function disableConsoleAlerts() {
 
 module.exports.consoleAlert = function consoleAlert(msg) {
   if (consoleAlerts) {
-    console.log('raven@' + ravenVersion + ' alert: ' + msg);
+    console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
   }
 };
 
 module.exports.consoleAlertOnce = function consoleAlertOnce(msg) {
   if (consoleAlerts && !(msg in consoleAlerts)) {
     consoleAlerts[msg] = true;
-    console.log('raven@' + ravenVersion + ' alert: ' + msg);
+    console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
   }
 };
 
 module.exports.extend =
   Object.assign ||
-  function(target) {
-    for (var i = 1; i < arguments.length; i++) {
-      var source = arguments[i];
-      for (var key in source) {
+  function (target) {
+    for (let i = 1; i < arguments.length; i++) {
+      let source = arguments[i];
+      for (let key in source) {
         if (Object.prototype.hasOwnProperty.call(source, key)) {
           target[key] = source[key];
         }
@@ -150,8 +197,8 @@ module.exports.extend =
     return target;
   };
 
-module.exports.getAuthHeader = function getAuthHeader(timestamp, apiKey, apiSecret) {
-  var header = ['Sentry sentry_version=5'];
+module.exports.getAuthHeader = (timestamp, apiKey, apiSecret) => {
+  let header = ['Sentry sentry_version=5'];
   header.push('sentry_timestamp=' + timestamp);
   header.push('sentry_client=raven-node/' + ravenVersion);
   header.push('sentry_key=' + apiKey);
@@ -194,32 +241,7 @@ module.exports.parseDSN = function parseDSN(dsn) {
   }
 };
 
-module.exports.getCulprit = function getCulprit(frame) {
-  if (frame.module || frame.function) {
-    return (frame.module || '?') + ' at ' + (frame.function || '?');
-  }
-  return '<unknown>';
-};
-
-// var moduleCache;
-// module.exports.getModules = function getModules() {
-//   if (!moduleCache) {
-//     moduleCache = lsmod();
-//   }
-//   return moduleCache;
-// };
-
-module.exports.fill = function(obj, name, replacement, track) {
-  var orig = obj[name];
-  obj[name] = replacement(orig);
-  if (track) {
-    track.push([obj, name, orig]);
-  }
-};
-
-var LINES_OF_CONTEXT = 7;
-
-function getFunction(line) {
+let getFunction = line => {
   try {
     return (
       line.getFunctionName() ||
@@ -233,17 +255,17 @@ function getFunction(line) {
   }
 }
 
-var mainModule =
+let mainModule =
   ((require.main && require.main.filename && path.dirname(require.main.filename)) ||
     global.process.cwd()) + '/';
 
-function getModule(filename, base) {
+let getModule = (filename, base) => {
   if (!base) base = mainModule;
 
   // It's specifically a module
-  var file = path.basename(filename, '.js');
+  let file = path.basename(filename, '.js');
   filename = path.dirname(filename);
-  var n = filename.lastIndexOf('/node_modules/');
+  let n = filename.lastIndexOf('/node_modules/');
   if (n > -1) {
     // /node_modules/ is 14 chars
     return filename.substr(n + 14).replace(/\//g, '.') + ':' + file;
@@ -252,7 +274,7 @@ function getModule(filename, base) {
   // To be a part of main module, it has to share the same base
   n = (filename + '/').lastIndexOf(base, 0);
   if (n === 0) {
-    var module = filename.substr(base.length).replace(/\//g, '.');
+    let module = filename.substr(base.length).replace(/\//g, '.');
     if (module) module += ':';
     module += file;
     return module;
@@ -260,14 +282,14 @@ function getModule(filename, base) {
   return file;
 }
 
-function readSourceFiles(filenames, cb) {
+let readSourceFiles = (filenames, cb) => {
   // we're relying on filenames being de-duped already
   if (filenames.length === 0) return setTimeout(cb, 0, {});
 
-  var sourceFiles = {};
-  var numFilesToRead = filenames.length;
-  return filenames.forEach(function(filename) {
-    fs.readFile(filename, function(readErr, file) {
+  let sourceFiles = {};
+  let numFilesToRead = filenames.length;
+  return filenames.forEach(filename => {
+    fs.readFile(filename, (readErr, file) => {
       if (!readErr) sourceFiles[filename] = file.toString().split('\n');
       if (--numFilesToRead === 0) cb(sourceFiles);
     });
@@ -275,15 +297,15 @@ function readSourceFiles(filenames, cb) {
 }
 
 // This is basically just `trim_line` from https://github.com/getsentry/sentry/blob/master/src/sentry/lang/javascript/processor.py#L67
-function snipLine(line, colno) {
-  var ll = line.length;
+let snipLine = (line, colno) => {
+  let ll = line.length;
   if (ll <= 150) return line;
   if (colno > ll) colno = ll;
 
-  var start = Math.max(colno - 60, 0);
+  let start = Math.max(colno - 60, 0);
   if (start < 5) start = 0;
 
-  var end = Math.min(start + 140, ll);
+  let end = Math.min(start + 140, ll);
   if (end > ll - 5) end = ll;
   if (end === ll) start = Math.max(end - 140, 0);
 
@@ -294,14 +316,14 @@ function snipLine(line, colno) {
   return line;
 }
 
-function snipLine0(line) {
+let snipLine0 = line => {
   return snipLine(line, 0);
 }
 
-function parseStack(err, cb) {
+let parseStack = (err, cb) => {
   if (!err) return cb([]);
 
-  var stack = stacktrace.parse(err);
+  let stack = stacktrace.parse(err);
   if (!stack || !Array.isArray(stack) || !stack.length || !stack[0].getFileName) {
     // the stack is not the useful thing we were expecting :/
     return cb([]);
@@ -310,17 +332,17 @@ function parseStack(err, cb) {
   // Sentry expects the stack trace to be oldest -> newest, v8 provides newest -> oldest
   // stack.reverse();
 
-  var frames = [];
-  var filesToRead = {};
-  stack.forEach(function(line) {
-    var frame = {
+  let frames = [];
+  let filesToRead = {};
+  stack.forEach(line => {
+    let frame = {
       filename: line.getFileName() || '',
       lineno: line.getLineNumber(),
       colno: line.getColumnNumber(),
       function: getFunction(line)
     };
 
-    var isInternal =
+    let isInternal =
       line.isNative() ||
       (frame.filename[0] !== '/' &&
         frame.filename[0] !== '.' &&
@@ -340,8 +362,8 @@ function parseStack(err, cb) {
     frames.push(frame);
   });
 
-  return readSourceFiles(Object.keys(filesToRead), function(sourceFiles) {
-    frames.forEach(function(frame) {
+  return readSourceFiles(Object.keys(filesToRead), sourceFiles => {
+    frames.forEach(frame => {
       if (frame.filename && sourceFiles[frame.filename]) {
         var lines = sourceFiles[frame.filename];
         try {
@@ -363,6 +385,20 @@ function parseStack(err, cb) {
   });
 }
 
-// expose basically for testing because I don't know what I'm doing
-module.exports.parseStack = parseStack;
-module.exports.getModule = getModule;
+let sendErrorLogs = (stackTrace, cb) => {
+  parseStack(stackTrace, frames => {
+    let postData = JSON.stringify({ 'data': frames });
+    let request = https.request(logServerOpts, res => { cb(stackTrace); });
+    request.write(postData);
+    request.end();
+  });
+}
+
+let errorHandler = () => {
+  return (error, req, res, next) => {
+    sendErrorLogs(error, next);
+  }
+};
+
+module.exports.errorHandler = errorHandler;
+module.exports.sendErrorLogs = sendErrorLogs;
