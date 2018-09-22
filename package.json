@@ -11,6 +11,7 @@
   "dependencies": {
     "dotenv": "^5.0.1",
     "express": "^4.16.3",
+    "on-finished": "^2.3.0",
     "request": "^2.88.0",
     "socket.io": "^2.1.0",
     "stack-trace": "0.0.10",
@@ -19,7 +20,7 @@
   "devDependencies": {
     "browser-sync": "^2.23.7",
     "del": "^3.0.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.0",
     "gulp-autoprefixer": "^5.0.0",
     "gulp-cache": "^1.0.2",
     "gulp-concat": "^2.6.1",

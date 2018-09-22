@@ -4,6 +4,7 @@ const url = require('url');
 const path = require('path');
 const https = require('http');
 const querystring = require('querystring');
+const onFinished = require('on-finished');
 
 // External Libs
 const request = require('request');
@@ -399,7 +400,7 @@ const addToken = token => {
   return;
 };
 
-const initialize = (token, options = defaultOptions) => {
+const initialize = (token, options = DEFAULT_OPTIONS) => {
   if (!token) {
     return (req, res, next) => {
       console.error('Please provide token');
@@ -418,8 +419,31 @@ const initialize = (token, options = defaultOptions) => {
   return (req, res, next) => {
     // add on finished to call send error if any
     // add benchmark functions on finished also
+    req.z_startAt = Date.now();
+
+    onFinished(res, function (err, res) {
+      let apiBody = {};
+      let request = res.req;
+
+      request.z_endAt = Date.now();
+
+      apiBody = {
+        endpoint: request.url.split('?')[0],
+        method: request.method,
+        startAt: request.z_startAt,
+        endAt: request.z_endAt
+      }
+
+      if (err) {
+        console.log('err: ', err);
+      }
+
+    });
+
     next();
   };
 };
+
+
 
 module.exports = { initialize, addToken, sendErrorLogs };

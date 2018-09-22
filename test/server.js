@@ -17,7 +17,10 @@ app.use(ZeroCrash.initialize('xyz'));
 // ZeroCrash.addToken('xyz');
 
 app.get('/', (req, res, next) => {
-  throw new Error('AN ERROR HAS OCCURED!');
+  // setTimeout(() => {
+    throw new Error('AN ERROR HAS OCCURED!');  
+    // res.send('');
+  // }, 2000);
 });
 
 app.use(function onError(err, req, res, next) {
