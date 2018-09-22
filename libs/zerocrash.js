@@ -422,4 +422,4 @@ const initialize = (token, options = defaultOptions) => {
   };
 };
 
-module.exports = { init, addToken, sendErrorLogs };
+module.exports = { initialize, addToken, sendErrorLogs };

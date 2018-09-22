@@ -13,7 +13,7 @@ const ZeroCrash = require('../libs/zerocrash');
 const express = require('express');
 const app = express();
 
-app.use(ZeroCrash.init('xyz'));
+app.use(ZeroCrash.initialize('xyz'));
 // ZeroCrash.addToken('xyz');
 
 app.get('/', (req, res, next) => {
