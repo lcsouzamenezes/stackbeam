@@ -1,14 +1,30 @@
+// Native Libs
 const fs = require('fs');
 const url = require('url');
 const path = require('path');
 const https = require('http');
-const stacktrace = require('stack-trace');
 const querystring = require('querystring');
+
+// External Libs
+const request = require('request');
+const stacktrace = require('stack-trace');
+
+/** Configuration */
+let configuration = {
+  token: ''
+};
 
 const LINES_OF_CONTEXT = 7;
 let port = process.env.SERVER_PORT;
 let hostname = process.env.SERVER_HOSTNAME;
 const zerocrashVersion = require('../package.json').version;
+
+const DEFAULT_OPTIONS = {
+  'alarm': '',
+  'crash': false,
+  'events': true,
+  'benchmarks': true
+};
 
 const protocolMap = {
   https: 443,
@@ -362,21 +378,48 @@ const parseStack = (err, cb) => {
 
     cb(frames);
   });
-}
+};
 
+// function to be called if on-finished contained error
 const sendErrorLogs = (stackTrace, cb) => {
+  // replace https.request with request module
   parseStack(stackTrace, frames => {
     let postData = JSON.stringify({ 'data': frames });
     let request = https.request(LOG_SERVER, res => { cb(stackTrace); });
     request.write(postData);
     request.end();
   });
-}
-
-const errorHandler = () => {
-  return (error, req, res, next) => {
-    sendErrorLogs(error, next);
-  }
 };
 
-module.exports.errorHandler = errorHandler;
+// function to append time on the request for ZC_startAt
+// function to be called when on-finished fired for ZC_endAt
+
+const addToken = token => {
+  configuration.token = token;
+  return;
+};
+
+const initialize = (token, options = defaultOptions) => {
+  if (!token) {
+    return (req, res, next) => {
+      console.error('Please provide token');
+      next();
+    };
+  }
+
+  options = {
+    'crash': !!options.crash,
+    'events': !!options.events,
+    'alarm': `${options.alarm}`,
+    'benchmarks': !!options.benchmarks
+  };
+
+  configuration.token = token;
+  return (req, res, next) => {
+    // add on finished to call send error if any
+    // add benchmark functions on finished also
+    next();
+  };
+};
+
+module.exports = { init, addToken, sendErrorLogs };

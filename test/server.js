@@ -13,17 +13,17 @@ const ZeroCrash = require('../libs/zerocrash');
 const express = require('express');
 const app = express();
 
-app.use()
+app.use(ZeroCrash.init('xyz'));
+// ZeroCrash.addToken('xyz');
 
 app.get('/', (req, res, next) => {
   throw new Error('AN ERROR HAS OCCURED!');
 });
 
-app.use(ZeroCrash.errorHandler());
-
 app.use(function onError(err, req, res, next) {
   res.statusCode = 500;
   res.end('Oops, something bad happened');
+  // ZeroCrash.sendErrorLogs(err);
 });
 
 let server = app.listen(PORT, () => { console.log(host); });
