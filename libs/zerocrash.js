@@ -10,10 +10,7 @@ const onFinished = require('on-finished');
 const request = require('request');
 const stacktrace = require('stack-trace');
 
-/** Configuration */
-let configuration = {
-  token: ''
-};
+let ZeroCrash = {};
 
 const LINES_OF_CONTEXT = 7;
 let port = process.env.SERVER_PORT;
@@ -21,11 +18,20 @@ let hostname = process.env.SERVER_HOSTNAME;
 const zerocrashVersion = require('../package.json').version;
 
 const DEFAULT_OPTIONS = {
-  'alarm': '',
-  'crash': false,
+  'alarm': false,
   'events': true,
-  'benchmarks': true
+  'benchmarks': true,
+  'crashReporting': true
 };
+
+const DEFAULT_CONFIGURATION = {
+  installed: false,
+  options: DEFAULT_OPTIONS,
+  token: ''
+};
+
+/** Configuration */
+let configuration = { ...DEFAULT_CONFIGURATION };
 
 const protocolMap = {
   https: 443,
@@ -381,69 +387,103 @@ const parseStack = (err, cb) => {
   });
 };
 
-// function to be called if on-finished contained error
-const sendErrorLogs = (stackTrace, cb) => {
-  // replace https.request with request module
+const sendErrorLogs = (stackTrace, type, cb) => {
+  console.log('type:', type);
+
   parseStack(stackTrace, frames => {
     let postData = JSON.stringify({ 'data': frames });
-    let request = https.request(LOG_SERVER, res => { cb(stackTrace); });
+    let request = https.request(LOG_SERVER, res => cb ? cb(stackTrace) : null);
     request.write(postData);
     request.end();
   });
 };
 
-// function to append time on the request for ZC_startAt
-// function to be called when on-finished fired for ZC_endAt
-
-const addToken = token => {
-  configuration.token = token;
-  return;
-};
-
-const initialize = (token, options = DEFAULT_OPTIONS) => {
+const install = (token, options = DEFAULT_OPTIONS) => {
   if (!token) {
-    return (req, res, next) => {
-      console.error('Please provide token');
-      next();
-    };
+    console.error('Please provide a valid token');
+    return ZeroCrash;
   }
 
-  options = {
-    'crash': !!options.crash,
+  configuration.options = {
+    'alarm': !!options.alarm,
     'events': !!options.events,
-    'alarm': `${options.alarm}`,
-    'benchmarks': !!options.benchmarks
+    'benchmarks': !!options.benchmarks,
+    'crashReporting': !!options.crashReporting
   };
 
-  configuration.token = token;
-  return (req, res, next) => {
-    // add on finished to call send error if any
-    // add benchmark functions on finished also
-    req.z_startAt = Date.now();
-
-    onFinished(res, function (err, res) {
-      let apiBody = {};
-      let request = res.req;
-
-      request.z_endAt = Date.now();
-
-      apiBody = {
-        endpoint: request.url.split('?')[0],
-        method: request.method,
-        startAt: request.z_startAt,
-        endAt: request.z_endAt
-      }
-
-      if (err) {
-        console.log('err: ', err);
-      }
-
+  if (configuration.options.crashReporting) {
+    process.on('unhandledRejection', (reason, p) => {
+      sendErrorLogs(reason, 'unhandledRejection');
+      console.error(reason);
+    }).on('uncaughtException', err => {
+      sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
+      console.error(err);
     });
+  }
 
-    next();
-  };
+  configuration.installed = true;
+  configuration.token = token;
+  return ZeroCrash;
 };
 
+const uninstall = () => {
+  if (!configuration.installed) {
+    console.warn('ZeroCrash is not already installed');
+    return ZeroCrash;
+  }
 
+  configuration = { ...DEFAULT_CONFIGURATION };
+  process.removeAllListeners('uncaughtException');
+  process.removeAllListeners('unhandledRejection');
+  return ZeroCrash;
+}
 
-module.exports = { initialize, addToken, sendErrorLogs };
+const requestHandler = () => (req, res, next) => {
+  if (!configuration.installed) {
+    console.warn('ZeroCrash will not work unless you install the module');
+    return next();
+  }
+
+  if (!configuration.options.benchmarks) {
+    return next();
+  }
+
+  req.z_startAt = Date.now();
+
+  onFinished(req, (err, request) => {
+    let apiBody = {};
+    request.z_endAt = Date.now();
+
+    apiBody = {
+      method: request.method,
+      endpoint: request.url.split('?')[0],
+      startAt: request.z_startAt,
+      endAt: request.z_endAt,
+      ip: request.ip
+    };
+
+    console.log('apiBody:', apiBody);
+  });
+
+  return next();
+};
+
+const errorHandler = () => (err, req, res, next) => {
+  if (!configuration.installed) {
+    console.warn('ZeroCrash will not work unless you install the module');
+    return next();
+  }
+
+  if (!configuration.options.crashReporting) {
+    return next();
+  }
+
+  return sendErrorLogs(err, 'handledError', next);
+};
+
+ZeroCrash.requestHandler = requestHandler;
+ZeroCrash.errorHandler = errorHandler;
+ZeroCrash.uninstall = uninstall;
+ZeroCrash.install = install;
+
+module.exports = ZeroCrash;
