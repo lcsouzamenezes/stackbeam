@@ -11,8 +11,8 @@ let hostname = process.env.SERVER_HOSTNAME;
 const zerocrashVersion = require('../package.json').version;
 
 const protocolMap = {
-  http: 80,
-  https: 443
+  https: 443,
+  http: 80
 };
 
 if (hostname.includes('http://')) {
@@ -30,26 +30,26 @@ if (hostname.includes(':')) {
   port = hostname.split(':')[1];
 }
 
-let logServerOpts = {
+const LOG_SERVER = {
   hostname: hostname,
   method: 'POST',
   port: port,
   path: '/'
 };
 
-var consoleAlerts = {};
+let consoleAlerts = {};
 
 // Default Node.js REPL depth
-var MAX_SERIALIZE_EXCEPTION_DEPTH = 3;
+const MAX_SERIALIZE_EXCEPTION_DEPTH = 3;
 // 50kB, as 100kB is max payload size, so half sounds reasonable
-var MAX_SERIALIZE_EXCEPTION_SIZE = 50 * 1024;
-var MAX_SERIALIZE_KEYS_LENGTH = 40;
+const MAX_SERIALIZE_EXCEPTION_SIZE = 50 * 1024;
+const MAX_SERIALIZE_KEYS_LENGTH = 40;
 
-let stringify = (obj, replacer, spaces, cycleReplacer) => {
+const stringify = (obj, replacer, spaces, cycleReplacer) => {
   return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces)
 }
 
-let serializer = (replacer, cycleReplacer) => {
+const serializer = (replacer, cycleReplacer) => {
   var stack = [],
     keys = []
 
@@ -70,21 +70,19 @@ let serializer = (replacer, cycleReplacer) => {
   }
 }
 
-let utf8Length = value => {
+const utf8Length = value => {
   return ~-encodeURI(value).split(/%..|./).length;
 }
 
-let jsonSize = value => {
+const jsonSize = value => {
   return utf8Length(JSON.stringify(value));
 }
 
-let isPlainObject = what => {
+const isPlainObject = what => {
   return Object.prototype.toString.call(what) === '[object Object]';
 }
 
-module.exports.isPlainObject = isPlainObject;
-
-let serializeValue = value => {
+const serializeValue = value => {
   let maxLength = 40;
 
   if (typeof value === 'string') {
@@ -108,7 +106,7 @@ let serializeValue = value => {
   return value;
 }
 
-let serializeObject = (value, depth) => {
+const serializeObject = (value, depth) => {
   if (depth === 0) return serializeValue(value);
 
   if (isPlainObject(value)) {
@@ -125,7 +123,7 @@ let serializeObject = (value, depth) => {
   return serializeValue(value);
 }
 
-let serializeException = (ex, depth, maxSize) => {
+const serializeException = (ex, depth, maxSize) => {
   if (!isPlainObject(ex)) return ex;
 
   depth = typeof depth !== 'number' ? MAX_SERIALIZE_EXCEPTION_DEPTH : depth;
@@ -140,9 +138,7 @@ let serializeException = (ex, depth, maxSize) => {
   return serialized;
 }
 
-module.exports.serializeException = serializeException;
-
-let serializeKeysForMessage = (keys, maxLength) => {
+const serializeKeysForMessage = (keys, maxLength) => {
   if (typeof keys === 'number' || typeof keys === 'string') return keys.toString();
   if (!Array.isArray(keys)) return '';
 
@@ -164,40 +160,24 @@ let serializeKeysForMessage = (keys, maxLength) => {
   return '';
 }
 
-module.exports.serializeKeysForMessage = serializeKeysForMessage;
-
-module.exports.disableConsoleAlerts = function disableConsoleAlerts() {
+const disableConsoleAlerts = function disableConsoleAlerts() {
   consoleAlerts = false;
 };
 
-module.exports.consoleAlert = function consoleAlert(msg) {
+const consoleAlert = function consoleAlert(msg) {
   if (consoleAlerts) {
     console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
   }
 };
 
-module.exports.consoleAlertOnce = function consoleAlertOnce(msg) {
+const consoleAlertOnce = function consoleAlertOnce(msg) {
   if (consoleAlerts && !(msg in consoleAlerts)) {
     consoleAlerts[msg] = true;
     console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
   }
 };
 
-module.exports.extend =
-  Object.assign ||
-  function (target) {
-    for (let i = 1; i < arguments.length; i++) {
-      let source = arguments[i];
-      for (let key in source) {
-        if (Object.prototype.hasOwnProperty.call(source, key)) {
-          target[key] = source[key];
-        }
-      }
-    }
-    return target;
-  };
-
-module.exports.getAuthHeader = (timestamp, apiKey, apiSecret) => {
+const getAuthHeader = (timestamp, apiKey, apiSecret) => {
   let header = ['Sentry sentry_version=5'];
   header.push('sentry_timestamp=' + timestamp);
   header.push('sentry_client=raven-node/' + ravenVersion);
@@ -206,7 +186,7 @@ module.exports.getAuthHeader = (timestamp, apiKey, apiSecret) => {
   return header.join(', ');
 };
 
-module.exports.parseDSN = function parseDSN(dsn) {
+const parseDSN = function parseDSN(dsn) {
   if (!dsn) {
     // Let a falsey value return false explicitly
     return false;
@@ -241,7 +221,7 @@ module.exports.parseDSN = function parseDSN(dsn) {
   }
 };
 
-let getFunction = line => {
+const getFunction = line => {
   try {
     return (
       line.getFunctionName() ||
@@ -259,7 +239,7 @@ let mainModule =
   ((require.main && require.main.filename && path.dirname(require.main.filename)) ||
     global.process.cwd()) + '/';
 
-let getModule = (filename, base) => {
+const getModule = (filename, base) => {
   if (!base) base = mainModule;
 
   // It's specifically a module
@@ -282,7 +262,7 @@ let getModule = (filename, base) => {
   return file;
 }
 
-let readSourceFiles = (filenames, cb) => {
+const readSourceFiles = (filenames, cb) => {
   // we're relying on filenames being de-duped already
   if (filenames.length === 0) return setTimeout(cb, 0, {});
 
@@ -296,8 +276,7 @@ let readSourceFiles = (filenames, cb) => {
   });
 }
 
-// This is basically just `trim_line` from https://github.com/getsentry/sentry/blob/master/src/sentry/lang/javascript/processor.py#L67
-let snipLine = (line, colno) => {
+const snipLine = (line, colno) => {
   let ll = line.length;
   if (ll <= 150) return line;
   if (colno > ll) colno = ll;
@@ -316,11 +295,11 @@ let snipLine = (line, colno) => {
   return line;
 }
 
-let snipLine0 = line => {
+const snipLine0 = line => {
   return snipLine(line, 0);
 }
 
-let parseStack = (err, cb) => {
+const parseStack = (err, cb) => {
   if (!err) return cb([]);
 
   let stack = stacktrace.parse(err);
@@ -385,20 +364,19 @@ let parseStack = (err, cb) => {
   });
 }
 
-let sendErrorLogs = (stackTrace, cb) => {
+const sendErrorLogs = (stackTrace, cb) => {
   parseStack(stackTrace, frames => {
     let postData = JSON.stringify({ 'data': frames });
-    let request = https.request(logServerOpts, res => { cb(stackTrace); });
+    let request = https.request(LOG_SERVER, res => { cb(stackTrace); });
     request.write(postData);
     request.end();
   });
 }
 
-let errorHandler = () => {
+const errorHandler = () => {
   return (error, req, res, next) => {
     sendErrorLogs(error, next);
   }
 };
 
 module.exports.errorHandler = errorHandler;
-module.exports.sendErrorLogs = sendErrorLogs;

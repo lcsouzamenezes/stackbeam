@@ -13,6 +13,8 @@ const ZeroCrash = require('../libs/zerocrash');
 const express = require('express');
 const app = express();
 
+app.use()
+
 app.get('/', (req, res, next) => {
   throw new Error('AN ERROR HAS OCCURED!');
 });
