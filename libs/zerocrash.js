@@ -11,10 +11,10 @@ const request = require('request');
 const stacktrace = require('stack-trace');
 
 let ZeroCrash = {};
+let hostname = process.env.SERVER_HOSTNAME;
+let port = process.env.SERVER_PORT;
 
 const LINES_OF_CONTEXT = 7;
-let port = process.env.SERVER_PORT;
-let hostname = process.env.SERVER_HOSTNAME;
 const zerocrashVersion = require('../package.json').version;
 
 const DEFAULT_OPTIONS = {
@@ -483,11 +483,19 @@ const errorHandler = () => (err, req, res, next) => {
   return sendErrorLogs(err, 'handledError', next);
 };
 
-const postToServer = (feature, data) => {
+const postToServer = (metric, data) => {
+  if (!configuration.token || !configuration.installed) {
+    console.warn('ZeroCrash is not installed');
+    return;
+  }
+  data.metric = metric; // Temporary decision 
   let apiConfig = {
     url: API_URL,
     body: data,
-    headers: ''
+    headers: {
+      'content-type': 'application/x-www-form-urlencoded',
+      'token': configuration.token
+    },
   };
   request.post(apiConfig, function (error, response, body) {
     console.log('error: ', error);
