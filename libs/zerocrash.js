@@ -30,6 +30,8 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
+const API_URL = 'http://localhost:5555'; 
+
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
 
@@ -479,6 +481,17 @@ const errorHandler = () => (err, req, res, next) => {
   }
 
   return sendErrorLogs(err, 'handledError', next);
+};
+
+const postToServer = (feature, data) => {
+  let apiConfig = {
+    url: API_URL,
+    body: data,
+    headers: ''
+  };
+  request.post(apiConfig, function (error, response, body) {
+    console.log('error: ', error);
+  });
 };
 
 ZeroCrash.requestHandler = requestHandler;
