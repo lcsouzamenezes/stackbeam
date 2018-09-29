@@ -464,7 +464,8 @@ const requestHandler = () => (req, res, next) => {
       endAt: request.z_endAt,
       ip: request.ip,
       resStatusCode: request.res.statusCode,
-      statusMessage: request.res.statusMessage
+      resStatusMessage: request.res.statusMessage,
+      headers: json.stringify(request.headers)
     };
 
     postToServer('metric', apiBody);
@@ -493,7 +494,7 @@ const postToServer = (metric, data) => {
   }
   let targetEndpoint = '';
   if (metric == 'metric') {
-    targetEndpoint = `${API_URL}/library/metric`;  
+    targetEndpoint = `${API_URL}/library/metrics`;  
   } else if (metric == 'exception'){
     targetEndpoint = `${API_URL}/library/exceptions`;  
   }
