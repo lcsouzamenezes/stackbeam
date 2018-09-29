@@ -11,7 +11,7 @@ const request = require('request');
 const stacktrace = require('stack-trace');
 
 let ZeroCrash = {};
-let hostname = process.env.SERVER_HOSTNAME;
+let hostname = process.env.SERVER_HOSTNAME; 
 let port = process.env.SERVER_PORT;
 
 const LINES_OF_CONTEXT = 7;
@@ -493,9 +493,10 @@ const postToServer = (metric, data) => {
     url: API_URL,
     body: data,
     headers: {
-      'content-type': 'application/x-www-form-urlencoded',
+      'content-type': 'application/json',
       'token': configuration.token
     },
+    json: true
   };
   request.post(apiConfig, function (error, response, body) {
     console.log('error: ', error);
