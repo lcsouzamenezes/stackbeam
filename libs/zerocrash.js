@@ -394,9 +394,10 @@ const sendErrorLogs = (stackTrace, type, cb) => {
 
   parseStack(stackTrace, frames => {
     let postData = JSON.stringify({ 'data': frames });
-    let request = https.request(LOG_SERVER, res => cb ? cb(stackTrace) : null);
-    request.write(postData);
-    request.end();
+    // let request = https.request(LOG_SERVER, res => cb ? cb(stackTrace) : null);
+    // request.write(postData);
+    // request.end();
+    postToServer('excpetion', postData);
   });
 };
 
@@ -457,14 +458,16 @@ const requestHandler = () => (req, res, next) => {
     request.z_endAt = Date.now();
 
     apiBody = {
-      method: request.method,
       endpoint: request.url.split('?')[0],
+      method: request.method,
       startAt: request.z_startAt,
       endAt: request.z_endAt,
-      ip: request.ip
+      ip: request.ip,
+      resStatusCode: request.res.statusCode,
+      statusMessage: request.res.statusMessage
     };
 
-    console.log('apiBody:', apiBody);
+    postToServer('metric', apiBody);
   });
 
   return next();
@@ -488,9 +491,14 @@ const postToServer = (metric, data) => {
     console.warn('ZeroCrash is not installed');
     return;
   }
-  data.metric = metric; // Temporary decision 
+  let targetEndpoint = '';
+  if (metric == 'metric') {
+    targetEndpoint = `${API_URL}/library/metric`;  
+  } else if (metric == 'exception'){
+    targetEndpoint = `${API_URL}/library/exceptions`;  
+  }
   let apiConfig = {
-    url: API_URL,
+    url: targetEndpoint,
     body: data,
     headers: {
       'content-type': 'application/json',
