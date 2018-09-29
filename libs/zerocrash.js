@@ -465,7 +465,7 @@ const requestHandler = () => (req, res, next) => {
       ip: request.ip,
       resStatusCode: request.res.statusCode,
       resStatusMessage: request.res.statusMessage,
-      headers: json.stringify(request.headers)
+      headers: JSON.stringify(request.headers)
     };
 
     postToServer('metric', apiBody);
