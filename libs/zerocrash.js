@@ -11,7 +11,7 @@ const request = require('request');
 const stacktrace = require('stack-trace');
 
 let ZeroCrash = {};
-let hostname = process.env.SERVER_HOSTNAME; 
+let hostname = process.env.SERVER_HOSTNAME;
 let port = process.env.SERVER_PORT;
 
 const LINES_OF_CONTEXT = 7;
@@ -30,7 +30,7 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
-const API_URL = 'http://localhost:5555'; 
+const API_URL = 'http://localhost:5555';
 
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
@@ -389,15 +389,14 @@ const parseStack = (err, cb) => {
   });
 };
 
-const sendErrorLogs = (stackTrace, type, cb) => {
+const sendErrorLogs = (error, type, cb) => {
   console.log('type:', type);
 
-  parseStack(stackTrace, frames => {
-    let postData = JSON.stringify({ 'data': frames });
-    // let request = https.request(LOG_SERVER, res => cb ? cb(stackTrace) : null);
-    // request.write(postData);
-    // request.end();
-    postToServer('excpetion', postData);
+  parseStack(error, stackTrace => {
+    let postData = JSON.stringify({ 'data': stackTrace });
+    postToServer('excpetion', postData, () => {
+      cb ? cb(error) : null
+    });
   });
 };
 
@@ -487,28 +486,32 @@ const errorHandler = () => (err, req, res, next) => {
   return sendErrorLogs(err, 'handledError', next);
 };
 
-const postToServer = (metric, data) => {
+const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
     console.warn('ZeroCrash is not installed');
     return;
   }
-  let targetEndpoint = '';
-  if (metric == 'metric') {
-    targetEndpoint = `${API_URL}/library/metrics`;  
-  } else if (metric == 'exception'){
-    targetEndpoint = `${API_URL}/library/exceptions`;  
+
+  if (!['metrics', 'exceptions'].includes(target)) {
+    console.error('Wrong API target provided');
+    return;
   }
+
+  let targetEndpoint = `${API_URL}/library/${target}`;
+
   let apiConfig = {
     url: targetEndpoint,
     body: data,
+    json: true,
     headers: {
       'content-type': 'application/json',
       'token': configuration.token
     },
-    json: true
   };
-  request.post(apiConfig, function (error, response, body) {
-    console.log('error: ', error);
+
+  request.post(apiConfig, (error, response, body) => {
+    error ? console.log('error: ', error) : null;
+    typeof cb === 'function' ? cb() : null;
   });
 };
 
