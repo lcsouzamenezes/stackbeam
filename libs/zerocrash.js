@@ -393,8 +393,17 @@ const sendErrorLogs = (error, type, cb) => {
   console.log('type:', type);
 
   parseStack(error, stackTrace => {
-    let postData = JSON.stringify({ 'data': stackTrace });
-    postToServer('excpetion', postData, () => {
+    let postData = { 'data': stackTrace[0] };
+    postData.data.errMsg = error.message;
+    postData.data.errName = error.name;
+    postData.data.user = {};
+
+    postData.data.sdk = {
+      'name': 'zerocrash',
+      'version': zerocrashVersion
+    };
+
+    postToServer('exceptions', postData, () => {
       cb ? cb(error) : null
     });
   });
@@ -467,7 +476,7 @@ const requestHandler = () => (req, res, next) => {
       headers: JSON.stringify(request.headers)
     };
 
-    postToServer('metric', apiBody);
+    postToServer('metrics', apiBody);
   });
 
   return next();
@@ -488,7 +497,7 @@ const errorHandler = () => (err, req, res, next) => {
 
 const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
-    console.warn('ZeroCrash is not installed');
+    console.error('ZeroCrash is not installed');
     return;
   }
 
