@@ -7,12 +7,7 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 
-const TOKEN = 'XYZ';
-const ZeroCrash = require('../libs/zerocrash').install(TOKEN);
-
-app.use(ZeroCrash.requestHandler());
-
-app.get('/', async (req, res, next) => {
+let runEndpointFunction = () => {
   let x = 5;
   let n = 3;
 
@@ -30,13 +25,18 @@ app.get('/', async (req, res, next) => {
   let z = x + Math.sin(n);
 
   console.log('our result', z);
-});
+};
+
+const TOKEN = 'XYZ';
+const ZeroCrash = require('../libs/zerocrash').install(TOKEN);
+
+app.use(ZeroCrash.requestHandler());
+
+app.get('/', async (req, res, next) => runEndpointFunction);
 
 app.use(ZeroCrash.errorHandler());
-/**
- * Catch 404 and forward to error handler
- */
-app.use((request, response, next) => {
+
+app.use(function on404(request, response, next) {
   response.statusCode = 404;
   response.end('Not found');
 });
