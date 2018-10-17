@@ -8,18 +8,11 @@ const express = require('express');
 const app = express();
 
 const TOKEN = 'XYZ';
-const ZeroCrash = require('../zerocrash').install(TOKEN);
+const ZeroCrash = require('../libs/zerocrash').install(TOKEN);
 
 app.use(ZeroCrash.requestHandler());
 
 app.get('/', async (req, res, next) => {
-  // console.log('req: ', req);
-  // let erroredAsyncFunction = async () => {
-  //   throw new Error('AN ASYNC ERROR HAS OCCURED!');
-  // };
-
-  // await erroredAsyncFunction();
-
   let x = 5;
   let n = 3;
 
@@ -37,19 +30,6 @@ app.get('/', async (req, res, next) => {
   let z = x + Math.sin(n);
 
   console.log('our result', z);
-
-  // throw new Error('A SYNC ERROR HAS OCCURED');
-
-  // fs.readFile('somefile.txt', function (err, data) {
-  //   if (err) throw err;
-  //   console.log(data);
-  // });
-
-  throw new Error('error for eds');
-
-  // setTimeout(() => {
-  //   return res.status(200).json({ message: 'm' });  
-  // }, 2000);
 });
 
 app.use(ZeroCrash.errorHandler());
