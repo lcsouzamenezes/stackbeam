@@ -28,7 +28,7 @@ let runEndpointFunction = () => {
 };
 
 const TOKEN = 'XYZ';
-const ZeroCrash = require('../zerocrash').install(TOKEN);
+const ZeroCrash = require('../').install(TOKEN);
 
 app.use(ZeroCrash.requestHandler());
 
