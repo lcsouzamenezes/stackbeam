@@ -424,11 +424,11 @@ const install = (token, options = DEFAULT_OPTIONS) => {
 
   if (configuration.options.crashReporting) {
     process.on('unhandledRejection', (reason, p) => {
-      sendErrorLogs(reason, 'unhandledRejection');
       console.error(reason);
+      sendErrorLogs(reason, 'unhandledRejection', () => process.exit(1));
     }).on('uncaughtException', err => {
-      sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
       console.error(err);
+      sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
     });
   }
 
