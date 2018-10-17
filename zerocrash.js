@@ -15,7 +15,7 @@ let hostname = process.env.SERVER_HOSTNAME;
 let port = process.env.SERVER_PORT;
 
 const LINES_OF_CONTEXT = 7;
-const zerocrashVersion = require('../package.json').version;
+const zerocrashVersion = require(`${path.resolve(__dirname)}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
   'alarm': false,
