@@ -32,7 +32,7 @@ const ZeroCrash = require('../zerocrash').install(TOKEN);
 
 app.use(ZeroCrash.requestHandler());
 
-app.get('/', async (req, res, next) => runEndpointFunction);
+app.get('/', async (req, res, next) => runEndpointFunction());
 
 app.use(ZeroCrash.errorHandler());
 
