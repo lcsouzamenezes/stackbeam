@@ -27,7 +27,7 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
-const API_URL = 'http://localhost:5555';
+const API_URL = 'http://207.154.240.216:5555';
 
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
