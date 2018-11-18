@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const PORT = 1333;
 const host = `Server running on PORT : ${PORT}`;
 
@@ -7,16 +5,20 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 
-let runEndpointFunction = () => {
+let runEndpointFunction = (req, res, next) => {
   let x = 5;
   let n = 3;
+
+  setTimeout(() => {
+    res.status(202).json({ 'message': 'done' });
+  }, Math.random() * 50);
 
   console.log(x);
   console.log(n);
 
   let sum = x + n;
 
-  t.doSomeFunction();
+  // t.heyThereFunction();
 
   let text = 'some text';
   let code = 'some code that runs';
@@ -32,7 +34,7 @@ const ZeroCrash = require('../').install(TOKEN);
 
 app.use(ZeroCrash.requestHandler());
 
-app.get('/', async (req, res, next) => runEndpointFunction());
+app.post('/hithere', runEndpointFunction);
 
 app.use(ZeroCrash.errorHandler());
 
