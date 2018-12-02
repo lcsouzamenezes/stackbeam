@@ -8,7 +8,12 @@ const express = require('express');
 const app = express();
 
 const TOKEN = 'XYZ';
-const ZeroCrash = require('../libs/zerocrash').install(TOKEN);
+const ZeroCrash = require('../libs/zerocrash').install(TOKEN, {
+  'alarm': true,
+    'events': true,
+    'benchmarks': true,
+    'crashReporting': true,
+});
 
 app.use(ZeroCrash.requestHandler());
 
