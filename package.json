@@ -2,37 +2,15 @@
   "name": "zerocrash",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "dotenv": "^5.0.1",
-    "express": "^4.16.3",
     "on-finished": "^2.3.0",
     "request": "^2.88.0",
-    "socket.io": "^2.1.0",
-    "stack-trace": "0.0.10",
-    "vue": "^2.5.16"
-  },
-  "devDependencies": {
-    "browser-sync": "^2.23.7",
-    "del": "^3.0.0",
-    "gulp": "^4.0.0",
-    "gulp-autoprefixer": "^5.0.0",
-    "gulp-cache": "^1.0.2",
-    "gulp-concat": "^2.6.1",
-    "gulp-imagemin": "^4.1.0",
-    "gulp-minify": "^2.1.0",
-    "gulp-minify-css": "^1.2.4",
-    "gulp-notify": "^3.2.0",
-    "gulp-plumber": "^1.2.0",
-    "gulp-rename": "^1.2.2",
-    "gulp-sass": "^4.0.1",
-    "gulp-strip-json-comments": "^3.0.0",
-    "gulp-uglify": "^3.0.0",
-    "gulp-util": "^3.0.8"
+    "stack-trace": "0.0.10"
   }
 }

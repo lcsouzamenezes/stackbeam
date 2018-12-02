@@ -1,5 +1,3 @@
-require('dotenv').config();
-
 const PORT = 1333;
 const host = `Server running on PORT : ${PORT}`;
 
@@ -7,39 +5,40 @@ const fs = require('fs');
 const express = require('express');
 const app = express();
 
+let runEndpointFunction = (req, res, next) => {
+  let x = 5;
+  let n = 3;
+
+  setTimeout(() => {
+    res.status(202).json({ 'message': 'done' });
+  }, Math.random() * 50);
+
+  console.log(x);
+  console.log(n);
+
+  let sum = x + n;
+
+  // t.heyThereFunction();
+
+  let text = 'some text';
+  let code = 'some code that runs';
+
+  console.log('this is the line');
+  let z = x + Math.sin(n);
+
+  console.log('our result', z);
+};
+
 const TOKEN = 'XYZ';
-const ZeroCrash = require('../libs/zerocrash').install(TOKEN, {
-  'alarm': true,
-    'events': true,
-    'benchmarks': true,
-    'crashReporting': true,
-});
+const ZeroCrash = require('../').install(TOKEN);
 
 app.use(ZeroCrash.requestHandler());
 
-app.get('/', async (req, res, next) => {
-  // console.log('req: ', req);
-  // let erroredAsyncFunction = async () => {
-  //   throw new Error('AN ASYNC ERROR HAS OCCURED!');
-  // };
-
-  // await erroredAsyncFunction();
-  // throw new Error('A SYNC ERROR HAS OCCURED');
-
-  // fs.readFile('somefile.txt', function (err, data) {
-  //   if (err) throw err;
-  //   console.log(data);
-  // });
-  setTimeout(() => {
-    return res.status(200).json({ message: 'm' });  
-  }, 2000);
-});
+app.post('/hithere', runEndpointFunction);
 
 app.use(ZeroCrash.errorHandler());
-/**
- * Catch 404 and forward to error handler
- */
-app.use((request, response, next) => {
+
+app.use(function on404(request, response, next) {
   response.statusCode = 404;
   response.end('Not found');
 });

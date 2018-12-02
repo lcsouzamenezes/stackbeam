@@ -4,18 +4,15 @@ const url = require('url');
 const path = require('path');
 const https = require('http');
 const querystring = require('querystring');
-const onFinished = require('on-finished');
 
 // External Libs
 const request = require('request');
 const stacktrace = require('stack-trace');
+const onFinished = require('on-finished');
 
-let ZeroCrash = {};
-let hostname = process.env.SERVER_HOSTNAME;
-let port = process.env.SERVER_PORT;
-
+const ZeroCrash = {};
 const LINES_OF_CONTEXT = 7;
-const zerocrashVersion = require('../package.json').version;
+const zerocrashVersion = require(`${path.resolve(__dirname)}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
   'alarm': false,
@@ -30,221 +27,11 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
-const API_URL = 'http://localhost:5555';
+const API_URL = 'http://207.154.240.216:5555';
 
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
-
-const protocolMap = {
-  https: 443,
-  http: 80
-};
-
-if (hostname.includes('http://')) {
-  hostname = hostname.split('http://')[1];
-  port = protocolMap.http;
-}
-
-if (hostname.includes('https://')) {
-  hostname = hostname.split('https://')[1];
-  port = protocolMap.https;
-}
-
-if (hostname.includes(':')) {
-  hostname = hostname.split(':')[0];
-  port = hostname.split(':')[1];
-}
-
-const LOG_SERVER = {
-  hostname: hostname,
-  method: 'POST',
-  port: port,
-  path: '/'
-};
-
 let consoleAlerts = {};
-
-// Default Node.js REPL depth
-const MAX_SERIALIZE_EXCEPTION_DEPTH = 3;
-// 50kB, as 100kB is max payload size, so half sounds reasonable
-const MAX_SERIALIZE_EXCEPTION_SIZE = 50 * 1024;
-const MAX_SERIALIZE_KEYS_LENGTH = 40;
-
-const stringify = (obj, replacer, spaces, cycleReplacer) => {
-  return JSON.stringify(obj, serializer(replacer, cycleReplacer), spaces)
-}
-
-const serializer = (replacer, cycleReplacer) => {
-  var stack = [],
-    keys = []
-
-  if (cycleReplacer == null) cycleReplacer = function (key, value) {
-    if (stack[0] === value) return "[Circular ~]"
-    return "[Circular ~." + keys.slice(0, stack.indexOf(value)).join(".") + "]"
-  }
-
-  return function (key, value) {
-    if (stack.length > 0) {
-      var thisPos = stack.indexOf(this);
-      ~thisPos ? stack.splice(thisPos + 1) : stack.push(this);
-      ~thisPos ? keys.splice(thisPos, Infinity, key) : keys.push(key);
-      if (~stack.indexOf(value)) value = cycleReplacer.call(this, key, value);
-    } else stack.push(value)
-
-    return replacer == null ? value : replacer.call(this, key, value)
-  }
-}
-
-const utf8Length = value => {
-  return ~-encodeURI(value).split(/%..|./).length;
-}
-
-const jsonSize = value => {
-  return utf8Length(JSON.stringify(value));
-}
-
-const isPlainObject = what => {
-  return Object.prototype.toString.call(what) === '[object Object]';
-}
-
-const serializeValue = value => {
-  let maxLength = 40;
-
-  if (typeof value === 'string') {
-    return value.length <= maxLength ? value : value.substr(0, maxLength - 1) + '\u2026';
-  } else if (
-    typeof value === 'number' ||
-    typeof value === 'boolean' ||
-    typeof value === 'undefined'
-  ) {
-    return value;
-  }
-
-  let type = Object.prototype.toString.call(value);
-
-  // Node.js REPL notation
-  if (type === '[object Object]') return '[Object]';
-  if (type === '[object Array]') return '[Array]';
-  if (type === '[object Function]')
-    return value.name ? '[Function: ' + value.name + ']' : '[Function]';
-
-  return value;
-}
-
-const serializeObject = (value, depth) => {
-  if (depth === 0) return serializeValue(value);
-
-  if (isPlainObject(value)) {
-    return Object.keys(value).reduce(function (acc, key) {
-      acc[key] = serializeObject(value[key], depth - 1);
-      return acc;
-    }, {});
-  } else if (Array.isArray(value)) {
-    return value.map(function (val) {
-      return serializeObject(val, depth - 1);
-    });
-  }
-
-  return serializeValue(value);
-}
-
-const serializeException = (ex, depth, maxSize) => {
-  if (!isPlainObject(ex)) return ex;
-
-  depth = typeof depth !== 'number' ? MAX_SERIALIZE_EXCEPTION_DEPTH : depth;
-  maxSize = typeof depth !== 'number' ? MAX_SERIALIZE_EXCEPTION_SIZE : maxSize;
-
-  var serialized = serializeObject(ex, depth);
-
-  if (jsonSize(stringify(serialized)) > maxSize) {
-    return serializeException(ex, depth - 1);
-  }
-
-  return serialized;
-}
-
-const serializeKeysForMessage = (keys, maxLength) => {
-  if (typeof keys === 'number' || typeof keys === 'string') return keys.toString();
-  if (!Array.isArray(keys)) return '';
-
-  keys = keys.filter(function (key) {
-    return typeof key === 'string';
-  });
-  if (keys.length === 0) return '[object has no keys]';
-
-  maxLength = typeof maxLength !== 'number' ? MAX_SERIALIZE_KEYS_LENGTH : maxLength;
-  if (keys[0].length >= maxLength) return keys[0];
-
-  for (let usedKeys = keys.length; usedKeys > 0; usedKeys--) {
-    let serialized = keys.slice(0, usedKeys).join(', ');
-    if (serialized.length > maxLength) continue;
-    if (usedKeys === keys.length) return serialized;
-    return serialized + '\u2026';
-  }
-
-  return '';
-}
-
-const disableConsoleAlerts = function disableConsoleAlerts() {
-  consoleAlerts = false;
-};
-
-const consoleAlert = function consoleAlert(msg) {
-  if (consoleAlerts) {
-    console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
-  }
-};
-
-const consoleAlertOnce = function consoleAlertOnce(msg) {
-  if (consoleAlerts && !(msg in consoleAlerts)) {
-    consoleAlerts[msg] = true;
-    console.log('zerocrash@' + zerocrashVersion + ' alert: ' + msg);
-  }
-};
-
-const getAuthHeader = (timestamp, apiKey, apiSecret) => {
-  let header = ['Sentry sentry_version=5'];
-  header.push('sentry_timestamp=' + timestamp);
-  header.push('sentry_client=raven-node/' + ravenVersion);
-  header.push('sentry_key=' + apiKey);
-  if (apiSecret) header.push('sentry_secret=' + apiSecret);
-  return header.join(', ');
-};
-
-const parseDSN = function parseDSN(dsn) {
-  if (!dsn) {
-    // Let a falsey value return false explicitly
-    return false;
-  }
-  try {
-    var parsed = url.parse(dsn),
-      response = {
-        protocol: parsed.protocol.slice(0, -1),
-        public_key: parsed.auth.split(':')[0],
-        host: parsed.host.split(':')[0]
-      };
-
-    if (parsed.auth.split(':')[1]) {
-      response.private_key = parsed.auth.split(':')[1];
-    }
-
-    if (~response.protocol.indexOf('+')) {
-      response.protocol = response.protocol.split('+')[1];
-    }
-
-    // if (!transports.hasOwnProperty(response.protocol)) {
-    //   throw new Error('Invalid transport');
-    // }
-
-    var index = parsed.pathname.lastIndexOf('/');
-    response.path = parsed.pathname.substr(0, index + 1);
-    response.project_id = parsed.pathname.substr(index + 1);
-    response.port = ~~parsed.port || protocolMap[response.protocol] || 443;
-    return response;
-  } catch (e) {
-    throw new Error('Invalid Sentry DSN: ' + dsn);
-  }
-};
 
 const getFunction = line => {
   try {
@@ -329,12 +116,8 @@ const parseStack = (err, cb) => {
 
   let stack = stacktrace.parse(err);
   if (!stack || !Array.isArray(stack) || !stack.length || !stack[0].getFileName) {
-    // the stack is not the useful thing we were expecting :/
     return cb([]);
   }
-
-  // Sentry expects the stack trace to be oldest -> newest, v8 provides newest -> oldest
-  // stack.reverse();
 
   let frames = [];
   let filesToRead = {};
@@ -424,11 +207,11 @@ const install = (token, options = DEFAULT_OPTIONS) => {
 
   if (configuration.options.crashReporting) {
     process.on('unhandledRejection', (reason, p) => {
-      sendErrorLogs(reason, 'unhandledRejection');
       console.error(reason);
+      sendErrorLogs(reason, 'unhandledRejection', () => process.exit(1));
     }).on('uncaughtException', err => {
-      sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
       console.error(err);
+      sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
     });
   }
 
