@@ -1,5 +1,5 @@
 # ZeroCrash
-##### For API only usage skip the Usage on Installation steps!
+### For API only usage [skip the Usage and Installation steps](#api-usage)!
 ---
 
 ## FEATURES
