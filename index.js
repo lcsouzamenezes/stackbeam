@@ -252,9 +252,14 @@ const requestHandler = () => (req, res, next) => {
   onFinished(req, (err, request) => {
     let apiBody = {};
     request.z_endAt = Date.now();
+    endpoint = request.originalUrl.split('?')[0];
+
+    if (request.route && request.route.path) {
+      endpoint = request.route.path;
+    }
 
     apiBody = {
-      endpoint: request.route.path,
+      endpoint: endpoint,
       method: request.method,
       startAt: request.z_startAt,
       endAt: request.z_endAt,
