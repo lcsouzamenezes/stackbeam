@@ -264,8 +264,7 @@ const requestHandler = () => (req, res, next) => {
       endAt: request.z_endAt,
       ip: request.ip,
       resStatusCode: request.res.statusCode,
-      resStatusMessage: request.res.statusMessage,
-      headers: JSON.stringify(request.headers)
+      resStatusMessage: request.res.statusMessage
     };
 
     postToServer('metrics', apiBody);
