@@ -2,7 +2,8 @@
 
 ```js
 const TOKEN = '0ABCDEF12345678901234567890123456789012345678901234567890ABCDEF0';
-const ZeroCrash = require('zerocrash').install(TOKEN);
+const config = { alarm: true, events: true, benchmarks: true, crashReporting: true };
+const ZeroCrash = require('zerocrash').install(TOKEN, config);
 
 app.use(ZeroCrash.requestHandler());
 
