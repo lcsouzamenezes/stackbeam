@@ -2,7 +2,8 @@
 
 ```js
 const TOKEN = '0ABCDEF12345678901234567890123456789012345678901234567890ABCDEF0';
-const ZeroCrash = require('zerocrash').install(TOKEN);
+const config = { alarm: true, events: true, benchmarks: true, crashReporting: true };
+const ZeroCrash = require('zerocrash').install(TOKEN, config);
 
 app.use(ZeroCrash.requestHandler());
 
@@ -31,7 +32,7 @@ If you discover a security vulnerability in ZeroCrash, please see [Security Poli
 
 ## People
 
-The original authors of ZeroCrash are [Pierre El Raii](https://github.com/pierreraii) and [Surge](https://github.com/surgeharb)
+The original authors of ZeroCrash are [Pierre Raii](https://github.com/pierreraii) and [Surge](https://github.com/surgeharb)
 
 [List of all contributors](https://github.com/nodeward/zerocrash/graphs/contributors)
 
