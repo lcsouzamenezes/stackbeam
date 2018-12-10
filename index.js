@@ -238,11 +238,7 @@ const requestHandler = () => (req, res, next) => {
     return next();
   }
 
-  if (req.originalUrl === '/z_healthcheck/up') {
-    return res.status(200);
-  }
-
-  if (!configuration.options.benchmarks) {
+  if (!configuration.options.benchmarks || req.method === 'OPTIONS') {
     return next();
   }
 
