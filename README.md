@@ -19,7 +19,7 @@ const TOKEN = '0ABCDEF12345678901234567890123456789012345678901234567890ABCDEF0'
 const options = { alarm: true, events: true, benchmarks: true, crashReporting: true };
 
 // Installing and Initializing the module
-const ZeroCrash = require('zerocrash').install(TOKEN, options);
+const ZeroCrash = require('@nodeward/zerocrash').install(TOKEN, options);
 
 // Before including any route
 app.use(ZeroCrash.requestHandler());
