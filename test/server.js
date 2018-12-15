@@ -30,13 +30,13 @@ let runEndpointFunction = (req, res, next) => {
 };
 
 const TOKEN = 'XYZ';
-const ZeroCrash = require('../').install(TOKEN);
+const StackBeam = require('../').install(TOKEN);
 
-app.use(ZeroCrash.requestHandler());
+app.use(StackBeam.requestHandler());
 
 app.post('/hithere', runEndpointFunction);
 
-app.use(ZeroCrash.errorHandler());
+app.use(StackBeam.errorHandler());
 
 app.use(function on404(request, response, next) {
   response.statusCode = 404;

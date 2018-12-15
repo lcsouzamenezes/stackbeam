@@ -1,6 +1,6 @@
 # Security Policies and Procedures
 
-This document outlines security procedures and general policies for the ZeroCrash
+This document outlines security procedures and general policies for the StackBeam
 project.
 
   * [Reporting a Bug](#reporting-a-bug)
@@ -9,8 +9,8 @@ project.
 
 ## Reporting a Bug
 
-The ZeroCrash team and community take all security bugs in ZeroCrash seriously.
-Thank you for improving the security of ZeroCrash. We appreciate your efforts and
+The StackBeam team and community take all security bugs in StackBeam seriously.
+Thank you for improving the security of StackBeam. We appreciate your efforts and
 responsible disclosure and will make every effort to acknowledge your
 contributions.
 

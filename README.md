@@ -1,4 +1,4 @@
-# ZeroCrash
+# StackBeam
 ##### For API only usage [skip the Usage and Installation steps](#api-usage)!
 ---
 
@@ -8,6 +8,9 @@
 - Monitor API requests, events, response status and time
 - Receive Alarms on Crashes/Exceptions and Unusual Traffic
 - Debug and Fix Crashes from within the Dashboard
+
+## DASHBOARD
+[https://app.stackbeam.io/](https://app.stackbeam.io/).
 
 ## Usage
 
@@ -19,16 +22,16 @@ const TOKEN = '0ABCDEF12345678901234567890123456789012345678901234567890ABCDEF0'
 const options = { alarm: true, events: true, benchmarks: true, crashReporting: true };
 
 // Installing and Initializing the module
-const ZeroCrash = require('@nodeward/zerocrash').install(TOKEN, options);
+const StackBeam = require('stackbeam').install(TOKEN, options);
 
 // Before including any route
-app.use(ZeroCrash.requestHandler());
+app.use(StackBeam.requestHandler());
 
 // Normal Express routes...
 app.get('/', (req, res) => res.json({ message: 'hello world' });
 
 // After including all routes
-app.use(ZeroCrash.errorHandler());
+app.use(StackBeam.errorHandler());
 ```
 
 ## Installation
@@ -42,7 +45,7 @@ Installation is done using the
 [`npm install` command](https://docs.npmjs.com/getting-started/installing-npm-packages-locally):
 
 ```bash
-$ npm install @nodeward/zerocrash --save
+$ npm install stackbeam --save
 ```
 
 ## API Usage
@@ -56,25 +59,25 @@ $ npm install @nodeward/zerocrash --save
       -d '{"endpoint": "/users/:id", "method": "GET", "startAt": "1544268184321", "end": "1544268181234", "ip": "181.215.95.235", "resStatusCode": "200", "resStatusMessage": "Success"}' \
       -H 'Token: <token>' \
       -H 'Content-Type: application/json' \
-      'http://207.154.240.216:5555/library/metrics'
+      'https://api.stackbeam.io/library/metrics'
 
   ## Exceptions Request
   curl -X POST \ 
       -d '{"errMsg":"TypeError", "errName":"cannot read property 'length' of undefined", "filename": "app.js", "colno":"13", "lineno":"80", "pre_context":"let x = [1,2,3]", "context_line":"console.log(y.length)", "post_context":"console.log(`DONE ${x}`)", "function":"getLength"}' \
       -H 'Token: <token>' \
       -H 'Content-Type: application/json' \
-      'http://207.154.240.216:5555/library/exceptions'
+      'https://api.stackbeam.io/library/exceptions'
 ```
 
 ### Security Issues
 
-If you discover a security vulnerability in ZeroCrash, please see [Security Policies and Procedures](Security.md).
+If you discover a security vulnerability in StackBeam, please see [Security Policies and Procedures](Security.md).
 
 ## People
 
-The original authors of ZeroCrash are [Pierre Raii](https://github.com/pierreraii) and [Surge](https://github.com/surgeharb)
+The original authors of StackBeam are [Pierre Raii](https://github.com/pierreraii) and [Surge](https://github.com/surgeharb)
 
-[List of all contributors](https://github.com/nodeward/zerocrash/graphs/contributors)
+[List of all contributors](https://github.com/nodeward/stackbeam/graphs/contributors)
 
 ## License
 

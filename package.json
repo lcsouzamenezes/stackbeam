@@ -1,5 +1,5 @@
 {
-  "name": "@nodeward/zerocrash",
+  "name": "@nodeward/stackbeam",
   "version": "0.0.2",
   "description": "---",
   "main": "index.js",
@@ -19,10 +19,10 @@
   "devDependencies": {},
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/nodeward/zerocrash.git"
+    "url": "git+https://github.com/nodeward/stackbeam.git"
   },
   "bugs": {
-    "url": "https://github.com/nodeward/zerocrash/issues"
+    "url": "https://github.com/nodeward/stackbeam/issues"
   },
-  "homepage": "https://github.com/nodeward/zerocrash#readme"
+  "homepage": "https://github.com/nodeward/stackbeam#readme"
 }

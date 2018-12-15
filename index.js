@@ -10,9 +10,9 @@ const request = require('request');
 const stacktrace = require('stack-trace');
 const onFinished = require('on-finished');
 
-const ZeroCrash = {};
+const StackBeam = {};
 const LINES_OF_CONTEXT = 7;
-const zerocrashVersion = require(`${path.resolve(__dirname)}/package.json`).version;
+const stackbeamVersion = require(`${path.resolve(__dirname)}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
   'alarm': false,
@@ -182,8 +182,8 @@ const sendErrorLogs = (error, type, cb) => {
     postData.data.user = {};
 
     postData.data.sdk = {
-      'name': 'zerocrash',
-      'version': zerocrashVersion
+      'name': 'stackbeam',
+      'version': stackbeamVersion
     };
 
     postToServer('exceptions', postData, () => {
@@ -195,7 +195,7 @@ const sendErrorLogs = (error, type, cb) => {
 const install = (token, options = DEFAULT_OPTIONS) => {
   if (!token) {
     console.error('Please provide a valid token');
-    return ZeroCrash;
+    return StackBeam;
   }
 
   configuration.options = {
@@ -217,24 +217,24 @@ const install = (token, options = DEFAULT_OPTIONS) => {
 
   configuration.installed = true;
   configuration.token = token;
-  return ZeroCrash;
+  return StackBeam;
 };
 
 const uninstall = () => {
   if (!configuration.installed) {
-    console.warn('ZeroCrash is not already installed');
-    return ZeroCrash;
+    console.warn('StackBeam is not already installed');
+    return StackBeam;
   }
 
   configuration = { ...DEFAULT_CONFIGURATION };
   process.removeAllListeners('uncaughtException');
   process.removeAllListeners('unhandledRejection');
-  return ZeroCrash;
+  return StackBeam;
 }
 
 const requestHandler = () => (req, res, next) => {
   if (!configuration.installed) {
-    console.warn('ZeroCrash will not work unless you install the module');
+    console.warn('StackBeam will not work unless you install the module');
     return next();
   }
 
@@ -271,7 +271,7 @@ const requestHandler = () => (req, res, next) => {
 
 const errorHandler = () => (err, req, res, next) => {
   if (!configuration.installed) {
-    console.warn('ZeroCrash will not work unless you install the module');
+    console.warn('StackBeam will not work unless you install the module');
     return next();
   }
 
@@ -284,7 +284,7 @@ const errorHandler = () => (err, req, res, next) => {
 
 const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
-    console.error('ZeroCrash is not installed');
+    console.error('StackBeam is not installed');
     return;
   }
 
@@ -311,9 +311,9 @@ const postToServer = (target, data, cb) => {
   });
 };
 
-ZeroCrash.requestHandler = requestHandler;
-ZeroCrash.errorHandler = errorHandler;
-ZeroCrash.uninstall = uninstall;
-ZeroCrash.install = install;
+StackBeam.requestHandler = requestHandler;
+StackBeam.errorHandler = errorHandler;
+StackBeam.uninstall = uninstall;
+StackBeam.install = install;
 
-module.exports = ZeroCrash;
+module.exports = StackBeam;
