@@ -27,7 +27,7 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
-const API_URL = 'http://207.154.240.216:5555';
+const API_URL = 'https://api.stackbeam.io/';
 
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
