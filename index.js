@@ -6,6 +6,7 @@ const https = require('http');
 const querystring = require('querystring');
 
 // External Libs
+const forever = require('forever');
 const request = require('request');
 const stacktrace = require('stack-trace');
 const onFinished = require('on-finished');
@@ -32,6 +33,42 @@ const API_URL = 'https://api.stackbeam.io/';
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
 let consoleAlerts = {};
+
+
+// Deamon setup
+const startDeamon = (token) => {
+  if (!token) {
+    console.log('Deamon could not be started. Missing token.');
+    return;
+  }
+  listDeamons((deamons) => {
+    let found = false;
+    deamons.forEach((deamon) => {
+      if (deamon.uid === token) {
+        found = true;
+      }
+    });
+    if (!found) {
+      const dem = forever.startDaemon("./lib/server.js", {
+        uid: token
+      });
+      if (dem) {
+        console.log('Deamon successfully started');
+      }
+    }
+  });
+};
+
+const listDeamons = (callback) => {
+  forever.list(false, (err, processes) => {
+    callback(processes);
+  });
+};
+
+const stopAllDeamons = () => {
+  forever.stopAll();
+};
+// End Deamon setup
 
 const getFunction = line => {
   try {
@@ -214,6 +251,8 @@ const install = (token, options = DEFAULT_OPTIONS) => {
       sendErrorLogs(err, 'uncaughtException', () => process.exit(1));
     });
   }
+
+  startDeamon(token);
 
   configuration.installed = true;
   configuration.token = token;
