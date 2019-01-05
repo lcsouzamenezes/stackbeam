@@ -28,7 +28,7 @@ const DEFAULT_CONFIGURATION = {
   token: ''
 };
 
-const API_URL = 'https://api.stackbeam.io/';
+const API_URL = 'http://localhost:3366';
 
 /** Configuration */
 let configuration = { ...DEFAULT_CONFIGURATION };
@@ -43,14 +43,18 @@ const startDeamon = (token) => {
   }
   listDeamons((deamons) => {
     let found = false;
-    deamons.forEach((deamon) => {
-      if (deamon.uid === token) {
-        found = true;
-      }
-    });
+    if (deamons) {
+      found = true;
+      // deamons.forEach((deamon) => {
+      //   if (deamon.uid === token) {
+      //     found = true;
+      //   }
+      // });
+    }
     if (!found) {
+      fs.writeFileSync('./to', token);
       const dem = forever.startDaemon("./lib/server.js", {
-        uid: token
+        args: [token]
       });
       if (dem) {
         console.log('Deamon successfully started');
@@ -210,7 +214,6 @@ const parseStack = (err, cb) => {
 };
 
 const sendErrorLogs = (error, type, cb) => {
-  console.log('type:', type);
 
   parseStack(error, stackTrace => {
     let postData = { 'data': stackTrace[0] };
