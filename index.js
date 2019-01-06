@@ -54,7 +54,7 @@ const startDeamon = (token) => {
     if (!found) {
       fs.writeFileSync('./to', token);
       const dem = forever.startDaemon("./lib/server.js", {
-        args: [token]
+        args: [token, process.pid]
       });
       if (dem) {
         console.log('Deamon successfully started');
