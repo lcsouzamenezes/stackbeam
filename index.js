@@ -1,15 +1,13 @@
 // Native Libs
 const fs = require('fs');
-const url = require('url');
 const path = require('path');
-const https = require('http');
-const querystring = require('querystring');
 
 // External Libs
 const forever = require('forever');
 const request = require('request');
 const stacktrace = require('stack-trace');
 const onFinished = require('on-finished');
+const wrapper = require("mongodb-perf-wrapper");
 
 const StackBeam = {};
 const LINES_OF_CONTEXT = 7;
@@ -327,6 +325,30 @@ const errorHandler = () => (err, req, res, next) => {
   return sendErrorLogs(err, 'handledError', next);
 };
 
+const dbHandler = (mongodb) => (req, res, next) => {
+  wrapper.wrap(mongodb, function(
+    collection,
+    operation,
+    timeMicroSeconds,
+    query,
+    responseErr
+  ) {
+    postToServer("dbLogs", {
+      query: {
+        collection: collection,
+        operation: operation,
+        timeMicroSeconds: timeMicroSeconds,
+        query: query,
+        responseErr: responseErr
+      }
+    }, () => {
+      // cb ? cb(error) : null
+    });
+  });
+
+  return next();
+};
+
 const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
     console.error('StackBeam is not installed');
@@ -358,6 +380,7 @@ const postToServer = (target, data, cb) => {
 
 StackBeam.requestHandler = requestHandler;
 StackBeam.errorHandler = errorHandler;
+StackBeam.dbHandler = dbHandler;
 StackBeam.uninstall = uninstall;
 StackBeam.install = install;
 
