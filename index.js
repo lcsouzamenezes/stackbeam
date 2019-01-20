@@ -333,7 +333,7 @@ const dbHandler = (mongodb) => (req, res, next) => {
     query,
     responseErr
   ) {
-    postToServer("dbLogs", {
+    postToServer("db-metrics", {
       query: {
         collection: collection,
         operation: operation,
@@ -355,7 +355,7 @@ const postToServer = (target, data, cb) => {
     return;
   }
 
-  if (!['metrics', 'exceptions'].includes(target)) {
+  if (!['metrics', 'exceptions', 'db-metrics'].includes(target)) {
     console.error('Wrong API target provided');
     return;
   }
