@@ -1,18 +1,17 @@
 // Native Libs
 const fs = require('fs');
-const url = require('url');
 const path = require('path');
-const https = require('http');
-const querystring = require('querystring');
 
 // External Libs
 const forever = require('forever');
 const request = require('request');
 const stacktrace = require('stack-trace');
 const onFinished = require('on-finished');
+const wrapper = require("mongodb-perf-wrapper");
 
 const StackBeam = {};
 const LINES_OF_CONTEXT = 7;
+const QUERY_TIME_THRESHOLD = 10000;
 const stackbeamVersion = require(`${path.resolve(__dirname)}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
@@ -327,13 +326,39 @@ const errorHandler = () => (err, req, res, next) => {
   return sendErrorLogs(err, 'handledError', next);
 };
 
+const dbHandler = (mongodb) => (req, res, next) => {
+  wrapper.wrap(mongodb, function(
+    collection,
+    operation,
+    timeMicroSeconds,
+    query,
+    responseErr
+  ) {
+    if (timeMicroSeconds > QUERY_TIME_THRESHOLD) {
+      postToServer("db-metrics", {
+        query: {
+          collection: collection,
+          operation: operation,
+          timeMicroSeconds: timeMicroSeconds,
+          query: JSON.stringify(query),
+          responseErr: responseErr
+        }
+      }, () => {
+        // cb ? cb(error) : null
+      });
+    }
+  });
+
+  return next();
+};
+
 const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
     console.error('StackBeam is not installed');
     return;
   }
 
-  if (!['metrics', 'exceptions'].includes(target)) {
+  if (!['metrics', 'exceptions', 'db-metrics'].includes(target)) {
     console.error('Wrong API target provided');
     return;
   }
@@ -358,6 +383,7 @@ const postToServer = (target, data, cb) => {
 
 StackBeam.requestHandler = requestHandler;
 StackBeam.errorHandler = errorHandler;
+StackBeam.dbHandler = dbHandler;
 StackBeam.uninstall = uninstall;
 StackBeam.install = install;
 
