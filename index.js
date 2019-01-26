@@ -11,6 +11,7 @@ const wrapper = require("mongodb-perf-wrapper");
 
 const StackBeam = {};
 const LINES_OF_CONTEXT = 7;
+const QUERY_TIME_THRESHOLD = 10000;
 const stackbeamVersion = require(`${path.resolve(__dirname)}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
@@ -333,17 +334,19 @@ const dbHandler = (mongodb) => (req, res, next) => {
     query,
     responseErr
   ) {
-    postToServer("db-metrics", {
-      query: {
-        collection: collection,
-        operation: operation,
-        timeMicroSeconds: timeMicroSeconds,
-        query: query,
-        responseErr: responseErr
-      }
-    }, () => {
-      // cb ? cb(error) : null
-    });
+    if (timeMicroSeconds > QUERY_TIME_THRESHOLD) {
+      postToServer("db-metrics", {
+        query: {
+          collection: collection,
+          operation: operation,
+          timeMicroSeconds: timeMicroSeconds,
+          query: JSON.stringify(query),
+          responseErr: responseErr
+        }
+      }, () => {
+        // cb ? cb(error) : null
+      });
+    }
   });
 
   return next();
