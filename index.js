@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 // External Libs
-const forever = require('forever');
+const pm2 = require('pm2');
 const request = require('request');
 const stacktrace = require('stack-trace');
 const onFinished = require('on-finished');
@@ -40,28 +40,23 @@ const startDeamon = (token) => {
     console.log('Deamon could not be started. Missing token.');
     return;
   }
-  listDeamons((deamons) => {
-    let found = false;
-    if (deamons) {
-      found = true;
-      // deamons.forEach((deamon) => {
-      //   if (deamon.uid === token) {
-      //     found = true;
-      //   }
-      // });
+
+  pm2.connect(err => {
+    if (err) {
+      console.error(err);
+      process.exit(2);
     }
-    if (!found) {
-      const dem = forever.startDaemon("./lib/agent.js", {
-        args: [token, process.pid],
-        logFile: 'log.log', // Path to log output from forever process (when daemonized)
-        outFile: 'out.log', // Path to log output from child stdout
-        errFile: 'err.log', // Path to log output from child stderr
-      });
-      if (dem) {
-        console.log('Deamon successfully started');
-      }
-    }
+
+    pm2.start({
+      name: 'stackbeam-agent',
+      script: './lib/agent.js',
+      args: [token]
+    }, (err, apps) => {
+      pm2.disconnect();
+      if (err) { throw err; }
+    })
   });
+
 };
 
 const listDeamons = (callback) => {
@@ -326,7 +321,7 @@ const errorHandler = () => (err, req, res, next) => {
 };
 
 const dbHandler = (mongodb) => (req, res, next) => {
-  wrapper.wrap(mongodb, function(
+  wrapper.wrap(mongodb, function (
     collection,
     operation,
     timeMicroSeconds,
