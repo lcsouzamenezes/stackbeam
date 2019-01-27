@@ -18,7 +18,7 @@ let runEndpointFunction = (req, res, next) => {
 
   let sum = x + n;
 
-  // t.heyThereFunction();
+  t.heyThereFunction();
 
   let text = 'some text';
   let code = 'some code that runs';
@@ -29,7 +29,7 @@ let runEndpointFunction = (req, res, next) => {
   console.log('our result', z);
 };
 
-const TOKEN = 'XYZ';
+const TOKEN = 'E61D3DBD71939F8C877B1981C553F246D4A1C0DCEE41C58B8C4F86222B639E58';
 const StackBeam = require('../').install(TOKEN);
 
 app.use(StackBeam.requestHandler());
