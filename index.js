@@ -58,16 +58,6 @@ const startDeamon = (token) => {
   });
 
 };
-
-const listDeamons = (callback) => {
-  forever.list(false, (err, processes) => {
-    callback(processes);
-  });
-};
-
-const stopAllDeamons = () => {
-  forever.stopAll();
-};
 // End Deamon setup
 
 const getFunction = line => {
