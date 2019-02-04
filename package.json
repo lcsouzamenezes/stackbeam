@@ -1,6 +1,6 @@
 {
   "name": "stackbeam",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Stackbeam - Node.js Realtime Monitoring & Debugging",
   "keywords": ["reporting", "analytics", "tracking-api", "crashes", "dashboard", "monitor", "nodejs", "debugging-tool", "realtime-tracking"],
   "main": "index.js",
