@@ -3,11 +3,15 @@
 ---
 
 ## FEATURES
-- Monitor users and behaviours on your live app
-- Monitor app status, health, Memory usage and CPU
-- Monitor API requests, events, response status and time
-- Receive Alarms on Crashes/Exceptions and Unusual Traffic
-- Debug and Fix Crashes from within the Dashboard
+- Monitor incoming HTTP requests
+- Diagnose errors happening in your application's code
+- View queries being executed on your MongoDB database
+- Keep an eye on your server's CPU, Memory and Storage usage
+- Get notified in case of emergency (High error rates, high latency...)
+- Track realtime log entries (Coming soon)
+
+## Website
+[https://stackbeam.io/](https://stackbeam.io/).
 
 ## DASHBOARD
 [https://app.stackbeam.io/](https://app.stackbeam.io/).
@@ -18,7 +22,7 @@
 // Token acquired from the dashboard projects page
 const TOKEN = '0ABCDEF12345678901234567890123456789012345678901234567890ABCDEF0';
 
-// Ability to turn on/off any feature that we provide
+// Ability to turn on/off specific features (All on by default)
 const options = { alarm: true, events: true, benchmarks: true, crashReporting: true };
 
 // Installing and Initializing the module
@@ -26,6 +30,9 @@ const StackBeam = require('stackbeam').install(TOKEN, options);
 
 // Before including any route
 app.use(StackBeam.requestHandler());
+ 
+// Require mongoDB and pass it as an argument 
+app.use(StackBeam.dbHandler(mongodbInstance)); 
 
 // Normal Express routes...
 app.get('/', (req, res) => res.json({ message: 'hello world' });
@@ -71,7 +78,7 @@ $ npm install stackbeam --save
 
 ### Security Issues
 
-If you discover a security vulnerability in StackBeam, please see [Security Policies and Procedures](Security.md).
+If you discover a security vulnerability in Stackbeam, please see [Security Policies and Procedures](Security.md).
 
 ## People
 
