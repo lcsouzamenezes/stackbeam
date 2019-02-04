@@ -1,12 +1,13 @@
 {
   "name": "stackbeam",
-  "version": "1.0.0",
-  "description": "---",
+  "version": "1.0.1",
+  "description": "Stackbeam - Node.js Realtime Monitoring & Debugging",
+  "keywords": ["reporting", "analytics", "tracking-api", "crashes", "dashboard", "monitor", "nodejs", "debugging-tool", "realtime-tracking"],
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "",
+  "author": "Stackbeam <info@stackbeam.io> (https://stackbeam.io/)",
   "license": "ISC",
   "dependencies": {
     "diskusage": "^1.0.0",
