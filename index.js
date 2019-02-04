@@ -12,7 +12,8 @@ const wrapper = require("mongodb-perf-wrapper");
 const StackBeam = {};
 const LINES_OF_CONTEXT = 7;
 const QUERY_TIME_THRESHOLD = 10000;
-const stackbeamVersion = require(`${path.resolve(__dirname)}/package.json`).version;
+const PWD = path.resolve(__dirname);
+const stackbeamVersion = require(`${PWD}/package.json`).version;
 
 const DEFAULT_OPTIONS = {
   'alarm': false,
@@ -49,7 +50,7 @@ const startDeamon = (token) => {
 
     pm2.start({
       name: 'stackbeam-agent',
-      script: './lib/agent.js',
+      script: `${PWD}/lib/agent.js`,
       args: [token]
     }, (err, apps) => {
       pm2.disconnect();
