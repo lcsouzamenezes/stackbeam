@@ -19,7 +19,8 @@ const DEFAULT_OPTIONS = {
   'alarm': false,
   'events': true,
   'benchmarks': true,
-  'crashReporting': true
+  'crashReporting': true,
+  'autoLog': false // Automatic console.log reporting
 };
 
 const DEFAULT_CONFIGURATION = {
@@ -337,6 +338,28 @@ const dbHandler = (mongodb) => (req, res, next) => {
   return next();
 };
 
+const log = (label = '', payload = {}) => {
+  if (label.length === 0) {
+    // TODO: add default label...
+    console.error('Log label missing');
+    return;
+  }
+
+  const logStruct = {
+    log: {
+      label: label,
+      payload: payload,
+      sbContext: {
+        occurenceTimestamp: Date.now()
+      }
+    }
+  }
+
+  postToServer("custom-logs", logStruct, () => {
+    // cb ? cb(error) : null
+  });
+};
+
 const postToServer = (target, data, cb) => {
   if (!configuration.token || !configuration.installed) {
     console.error('StackBeam is not installed');
@@ -369,6 +392,7 @@ const postToServer = (target, data, cb) => {
 StackBeam.requestHandler = requestHandler;
 StackBeam.errorHandler = errorHandler;
 StackBeam.dbHandler = dbHandler;
+StackBeam.log = log;
 StackBeam.uninstall = uninstall;
 StackBeam.install = install;
 
