@@ -338,13 +338,7 @@ const dbHandler = (mongodb) => (req, res, next) => {
   return next();
 };
 
-const log = (label = '', payload = {}) => {
-  if (label.length === 0) {
-    // TODO: add default label...
-    console.error('Log label missing');
-    return;
-  }
-
+const log = (label = 'Log', payload = {}) => {
   const logStruct = {
     log: {
       label: label,
@@ -355,9 +349,7 @@ const log = (label = '', payload = {}) => {
     }
   }
 
-  postToServer("custom-logs", logStruct, () => {
-    // cb ? cb(error) : null
-  });
+  postToServer('custom-logs', logStruct, () => {});
 };
 
 const postToServer = (target, data, cb) => {
@@ -366,7 +358,7 @@ const postToServer = (target, data, cb) => {
     return;
   }
 
-  if (!['metrics', 'exceptions', 'db-metrics'].includes(target)) {
+  if (!['metrics', 'exceptions', 'db-metrics', 'custom-logs'].includes(target)) {
     console.error('Wrong API target provided');
     return;
   }
@@ -392,8 +384,8 @@ const postToServer = (target, data, cb) => {
 StackBeam.requestHandler = requestHandler;
 StackBeam.errorHandler = errorHandler;
 StackBeam.dbHandler = dbHandler;
-StackBeam.log = log;
 StackBeam.uninstall = uninstall;
 StackBeam.install = install;
+StackBeam.log = log;
 
 module.exports = StackBeam;
